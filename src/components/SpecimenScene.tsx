@@ -10,9 +10,9 @@ import {
 } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import {
-  Center,
   ContactShadows,
   Html,
+  Line,
   OrbitControls,
   useGLTF,
   useProgress,
@@ -100,11 +100,16 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
       size = box.getSize(new Vector3());
     const scale = 3.4 / Math.max(size.x, size.y, size.z);
     clone.scale.setScalar(scale);
-    return clone;
+    clone.updateMatrixWorld(true);
+    const fittedBox = new Box3().setFromObject(clone);
+    const center = fittedBox.getCenter(new Vector3());
+    const halfSize = fittedBox.getSize(new Vector3()).multiplyScalar(0.5);
+    clone.position.sub(center);
+    return { object: clone, halfSize };
   }, [scene, surface, specimen.id]);
   useEffect(
     () => () => {
-      model.traverse((n) => {
+      model.object.traverse((n) => {
         if (n instanceof Mesh)
           (Array.isArray(n.material) ? n.material : [n.material]).forEach((m) =>
             m.dispose(),
@@ -115,22 +120,45 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
   );
   return (
     <group>
-      <Center>
-        <primitive object={model} />
-      </Center>
-      {labels &&
-        specimen.parts.map((p, i) => (
-          <Html key={p.name} position={p.point} center zIndexRange={[8, 0]}>
-            <button
-              aria-label={p.name}
-              className={`hotspot ${active === i ? "selected" : ""}`}
-              onClick={() => onSelect(i)}
-            >
-              0{i + 1}
-            </button>
-            {active === i && <div className="hotspot-label">{p.name}</div>}
-          </Html>
-        ))}
+        <primitive object={model.object} />
+        {labels &&
+          specimen.parts.map((p, i) => {
+            const anchor: [number, number, number] = [
+              (p.point[0] / 1.35) * model.halfSize.x,
+              (p.point[1] / 1.35) * model.halfSize.y,
+              (p.point[2] / 1.35) * model.halfSize.z,
+            ];
+            const lift = Math.max(0.08, Math.min(0.18, model.halfSize.y * 0.12));
+            const marker: [number, number, number] = [
+              anchor[0],
+              anchor[1] + lift,
+              anchor[2],
+            ];
+            return (
+              <group key={p.name}>
+                <mesh position={anchor}>
+                  <sphereGeometry args={[0.025, 12, 12]} />
+                  <meshBasicMaterial color={specimen.color} depthTest={false} />
+                </mesh>
+                <Line
+                  points={[anchor, marker]}
+                  color={specimen.color}
+                  lineWidth={1.2}
+                  depthTest={false}
+                />
+                <Html position={marker} center zIndexRange={[8, 0]}>
+                  <button
+                    aria-label={p.name}
+                    className={`hotspot ${active === i ? "selected" : ""}`}
+                    onClick={() => onSelect(i)}
+                  >
+                    0{i + 1}
+                  </button>
+                  {active === i && <div className="hotspot-label">{p.name}</div>}
+                </Html>
+              </group>
+            );
+          })}
     </group>
   );
 }
