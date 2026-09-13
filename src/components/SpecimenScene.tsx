@@ -268,17 +268,18 @@ function Controls({
   resetKey,
   zoom,
   autoRotate,
-}: Pick<Props, "resetKey" | "zoom" | "autoRotate">) {
+  specimenId,
+}: Pick<Props, "resetKey" | "zoom" | "autoRotate"> & { specimenId: string }) {
   const ref = useRef<OrbitControlsImpl>(null);
   const { camera, invalidate } = useThree();
   const last = useRef(0);
   useEffect(() => {
-    camera.position.set(0, 0.12, 6);
+    camera.position.set(specimenId === "diatom" ? -3 : 0, 0.12, specimenId === "diatom" ? 5.2 : 6);
     ref.current?.target.set(0, 0, 0);
     ref.current?.update();
     last.current = 0;
     invalidate();
-  }, [resetKey, camera, invalidate]);
+  }, [resetKey, specimenId, camera, invalidate]);
   useEffect(() => {
     if (ref.current) {
       const offset = camera.position.clone().sub(ref.current.target);
@@ -337,6 +338,7 @@ export default function SpecimenScene(props: Props) {
           resetKey={props.resetKey}
           zoom={props.zoom}
           autoRotate={props.autoRotate}
+          specimenId={props.specimen.id}
         />
       </Canvas>
     </SceneError>
