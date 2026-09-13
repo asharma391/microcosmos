@@ -23,6 +23,7 @@ import {
   Mesh,
   MeshStandardMaterial,
   Color,
+  Raycaster,
   SRGBColorSpace,
   ACESFilmicToneMapping,
 } from "three";
@@ -73,7 +74,7 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
   const model = useMemo(() => {
     const clone = scene.clone(true);
     if (specimen.id === "tardigrade") clone.rotation.y = -1.05;
-    if (specimen.id === "diatom") clone.rotation.x = -1;
+    if (specimen.id === "diatom") clone.rotation.x = -Math.PI / 2;
     if (specimen.id === "paramecium") clone.rotation.x = Math.PI / 2;
     clone.traverse((node) => {
       if (!(node instanceof Mesh)) return;
@@ -108,8 +109,35 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
     const center = fittedBox.getCenter(new Vector3());
     const halfSize = fittedBox.getSize(new Vector3()).multiplyScalar(0.5);
     clone.position.sub(center);
-    return { object: clone, halfSize };
-  }, [scene, surface, specimen.id]);
+    clone.updateMatrixWorld(true);
+
+    const maxHalf = Math.max(halfSize.x, halfSize.y, halfSize.z);
+    const raycaster = new Raycaster();
+    const anchors = specimen.parts.map((part) => {
+      const candidate = new Vector3(
+        (part.point[0] / 1.35) * halfSize.x,
+        (part.point[1] / 1.35) * halfSize.y,
+        (part.point[2] / 1.35) * halfSize.z,
+      );
+
+      // Pins are authored from the default front view. Project them onto the
+      // real mesh so rotation and zoom cannot reveal a gap from the specimen.
+      raycaster.set(
+        new Vector3(candidate.x, candidate.y, halfSize.z + maxHalf + 0.5),
+        new Vector3(0, 0, -1),
+      );
+      let hit = raycaster.intersectObject(clone, true)[0];
+      if (!hit) {
+        const radial = candidate.clone();
+        if (radial.lengthSq() < 0.001) radial.set(0, 0, 1);
+        radial.normalize();
+        raycaster.set(radial.clone().multiplyScalar(maxHalf * 3), radial.clone().negate());
+        hit = raycaster.intersectObject(clone, true)[0];
+      }
+      return (hit?.point ?? candidate).toArray() as [number, number, number];
+    });
+    return { object: clone, halfSize, anchors };
+  }, [scene, surface, specimen.id, specimen.parts]);
   useEffect(
     () => () => {
       model.object.traverse((n) => {
@@ -126,14 +154,14 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
         <primitive object={model.object} />
         {labels &&
           specimen.parts.map((p, i) => {
-            const anchor: [number, number, number] = [
-              (p.point[0] / 1.35) * model.halfSize.x,
-              (p.point[1] / 1.35) * model.halfSize.y,
-              (p.point[2] / 1.35) * model.halfSize.z,
-            ];
+            const anchor = model.anchors[i];
             const lift = Math.max(0.08, Math.min(0.18, model.halfSize.y * 0.12));
+            const insetX =
+              Math.abs(anchor[0]) > model.halfSize.x * 0.78
+                ? -Math.sign(anchor[0]) * lift
+                : 0;
             const marker: [number, number, number] = [
-              anchor[0],
+              anchor[0] + insetX,
               anchor[1] + lift,
               anchor[2],
             ];
