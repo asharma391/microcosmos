@@ -160,8 +160,9 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
               Math.abs(anchor[0]) > model.halfSize.x * 0.78
                 ? -Math.sign(anchor[0]) * lift
                 : 0;
+            const spreadX = (i % 2 === 0 ? -1 : 1) * lift * 1.35;
             const marker: [number, number, number] = [
-              anchor[0] + insetX,
+              anchor[0] + insetX + spreadX,
               anchor[1] + lift,
               anchor[2],
             ];
