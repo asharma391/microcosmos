@@ -20,17 +20,16 @@ import {
   useProgress,
 } from "@react-three/drei";
 import {
-  Box3,
   Vector3,
   Mesh,
   MeshStandardMaterial,
   Color,
-  Raycaster,
   SRGBColorSpace,
   ACESFilmicToneMapping,
 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { specimens, type Specimen } from "../data/specimens";
+import { modelGeometry } from "../data/modelGeometry";
 
 const modelUrls = specimens.map((specimen) => specimen.model);
 
@@ -42,7 +41,7 @@ function runWhenIdle(task: () => void) {
     } else {
       task();
     }
-  }, 450);
+  }, 80);
   return () => {
     clearTimeout(delayId);
     if (idleId !== undefined) window.cancelIdleCallback(idleId);
@@ -101,17 +100,38 @@ function WarmModel({ url, onReady }: { url: string; onReady: () => void }) {
   return null;
 }
 
-function CollectionWarmer({ current }: { current: string }) {
-  const queue = useRef(modelUrls.filter((url) => url !== current));
-  const [index, setIndex] = useState(-1);
+function CollectionBootstrap({
+  current,
+  onComplete,
+}: {
+  current: string;
+  onComplete: () => void;
+}) {
+  const queue = useRef([
+    current,
+    ...modelUrls.filter((url) => url !== current),
+  ]);
+  const [index, setIndex] = useState(0);
   const advance = useCallback(() => setIndex((value) => value + 1), []);
-  useEffect(() => runWhenIdle(advance), [advance]);
+  useEffect(() => {
+    if (index >= queue.current.length) onComplete();
+  }, [index, onComplete]);
   const url = queue.current[index];
-  if (!url) return null;
   return (
-    <Suspense fallback={null}>
-      <WarmModel url={url} onReady={advance} />
-    </Suspense>
+    <>
+      {url && (
+        <Suspense fallback={null}>
+          <WarmModel url={url} onReady={advance} />
+        </Suspense>
+      )}
+      {index < queue.current.length && (
+        <Html center>
+          <div className="model-loading">
+            Preparing collection · {index + 1}/{queue.current.length}
+          </div>
+        </Html>
+      )}
+    </>
   );
 }
 function Annotation({
@@ -133,7 +153,6 @@ function Annotation({
   active: number | null;
   onSelect: (n: number) => void;
 }) {
-  const [occluded, setOccluded] = useState(false);
   const [backFacing, setBackFacing] = useState(false);
   const anchorVector = useMemo(() => new Vector3(...anchor), [anchor]);
   const normalVector = useMemo(() => new Vector3(...normal), [normal]);
@@ -150,25 +169,19 @@ function Annotation({
   if (backFacing) return null;
   return (
     <group>
-      {!occluded && (
-        <>
-          <mesh position={anchor}>
-            <sphereGeometry args={[0.025, 12, 12]} />
-            <meshBasicMaterial color={color} depthTest={false} />
-          </mesh>
-          <Line
-            points={[anchor, marker]}
-            color={color}
-            lineWidth={1.2}
-            depthTest={false}
-          />
-        </>
-      )}
+      <mesh position={anchor}>
+        <sphereGeometry args={[0.025, 12, 12]} />
+        <meshBasicMaterial color={color} depthTest={false} />
+      </mesh>
+      <Line
+        points={[anchor, marker]}
+        color={color}
+        lineWidth={1.2}
+        depthTest={false}
+      />
       <Html
         position={marker}
         center
-        occlude
-        onOcclude={setOccluded}
         zIndexRange={[8, 0]}
       >
         <button
@@ -183,10 +196,18 @@ function Annotation({
     </group>
   );
 }
-function Model({ specimen, surface, labels, active, onSelect }: Props) {
+function Model({
+  specimen,
+  surface,
+  labels,
+  active,
+  onSelect,
+  visible,
+}: Props & { visible: boolean }) {
   const { scene } = useGLTF(specimen.model);
   const model = useMemo(() => {
     const clone = scene.clone(true);
+    const geometry = modelGeometry[specimen.id];
     if (specimen.id === "tardigrade") clone.rotation.y = -1.05;
     if (specimen.id === "diatom") clone.rotation.x = Math.PI / 2;
     if (specimen.id === "paramecium") clone.rotation.x = Math.PI / 2;
@@ -213,56 +234,15 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
       node.castShadow = false;
       node.receiveShadow = false;
     });
-    const box = new Box3().setFromObject(clone),
-      size = box.getSize(new Vector3());
-    // Leave a little breathing room so annotations remain readable during zoom.
-    const scale = 3.2 / Math.max(size.x, size.y, size.z);
-    clone.scale.setScalar(scale);
+    clone.scale.setScalar(geometry.scale);
+    clone.position.fromArray(geometry.position);
     clone.updateMatrixWorld(true);
-    const fittedBox = new Box3().setFromObject(clone);
-    const center = fittedBox.getCenter(new Vector3());
-    const halfSize = fittedBox.getSize(new Vector3()).multiplyScalar(0.5);
-    clone.position.sub(center);
-    clone.updateMatrixWorld(true);
-
-    const maxHalf = Math.max(halfSize.x, halfSize.y, halfSize.z);
-    const raycaster = new Raycaster();
-    const anchors = specimen.parts.map((part) => {
-      const candidate = new Vector3(
-        (part.point[0] / 1.35) * halfSize.x,
-        (part.point[1] / 1.35) * halfSize.y,
-        (part.point[2] / 1.35) * halfSize.z,
-      );
-
-      // Pins are authored from the default front view. Project them onto the
-      // real mesh so rotation and zoom cannot reveal a gap from the specimen.
-      raycaster.set(
-        new Vector3(candidate.x, candidate.y, halfSize.z + maxHalf + 0.5),
-        new Vector3(0, 0, -1),
-      );
-      let hit = raycaster.intersectObject(clone, true)[0];
-      let outward = new Vector3(0, 0, 1);
-      if (!hit) {
-        const radial = candidate.clone();
-        if (radial.lengthSq() < 0.001) radial.set(0, 0, 1);
-        radial.normalize();
-        outward = radial.clone();
-        raycaster.set(radial.clone().multiplyScalar(maxHalf * 3), radial.clone().negate());
-        hit = raycaster.intersectObject(clone, true)[0];
-      }
-      let normal = outward;
-      if (hit?.face) {
-        normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
-        if (normal.dot(outward) < 0) normal.negate();
-      }
-      const snapped = hit?.point.clone().addScaledVector(normal, maxHalf * 0.008) ?? candidate;
-      return {
-        point: snapped.toArray() as [number, number, number],
-        normal: normal.toArray() as [number, number, number],
-      };
-    });
-    return { object: clone, halfSize, anchors };
-  }, [scene, surface, specimen.id, specimen.parts]);
+    return {
+      object: clone,
+      halfSize: new Vector3(...geometry.halfSize),
+      anchors: geometry.anchors,
+    };
+  }, [scene, surface, specimen.id]);
   useEffect(
     () => () => {
       model.object.traverse((n) => {
@@ -275,9 +255,9 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
     [model],
   );
   return (
-    <group>
+    <group visible={visible}>
         <primitive object={model.object} />
-        {labels &&
+        {visible && labels &&
           specimen.parts.map((p, i) => {
             const anchor = model.anchors[i].point;
             const lift = Math.max(0.08, Math.min(0.18, model.halfSize.y * 0.12));
@@ -349,6 +329,8 @@ function Controls({
   );
 }
 export default function SpecimenScene(props: Props) {
+  const [collectionReady, setCollectionReady] = useState(false);
+  const finishBootstrap = useCallback(() => setCollectionReady(true), []);
   return (
     <SceneError image={props.specimen.image} resetKey={props.specimen.id}>
       <Canvas
@@ -360,31 +342,45 @@ export default function SpecimenScene(props: Props) {
           powerPreference: "high-performance",
           toneMapping: ACESFilmicToneMapping,
         }}
-        frameloop={props.autoRotate ? "always" : "demand"}
+        frameloop={collectionReady && props.autoRotate ? "always" : "demand"}
       >
         <ambientLight intensity={0.45} />
         <hemisphereLight args={["#fff9ec", "#adba9b", 0.7]} />
         <directionalLight position={[4, 6, 5]} intensity={2.1} />
         <directionalLight position={[-4, 2, -3]} intensity={0.85} />
-        <Suspense fallback={<Loading />}>
-          <Model {...props} />
-          <ContactShadows
-            position={[0, -1.9, 0]}
-            opacity={0.12}
-            scale={8}
-            blur={3}
-            far={4}
-            resolution={256}
-            frames={1}
-          />
-        </Suspense>
-        <CollectionWarmer current={props.specimen.model} />
-        <Controls
-          resetKey={props.resetKey}
-          zoom={props.zoom}
-          autoRotate={props.autoRotate}
-          specimenId={props.specimen.id}
+        <CollectionBootstrap
+          current={props.specimen.model}
+          onComplete={finishBootstrap}
         />
+        {collectionReady && (
+          <>
+            <Suspense fallback={<Loading />}>
+              {specimens.map((specimen) => (
+                <Model
+                  {...props}
+                  key={specimen.id}
+                  specimen={specimen}
+                  visible={specimen.id === props.specimen.id}
+                />
+              ))}
+              <ContactShadows
+                position={[0, -1.9, 0]}
+                opacity={0.12}
+                scale={8}
+                blur={3}
+                far={4}
+                resolution={256}
+                frames={1}
+              />
+            </Suspense>
+            <Controls
+              resetKey={props.resetKey}
+              zoom={props.zoom}
+              autoRotate={props.autoRotate}
+              specimenId={props.specimen.id}
+            />
+          </>
+        )}
       </Canvas>
     </SceneError>
   );
