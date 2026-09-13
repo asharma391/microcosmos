@@ -9,7 +9,7 @@
   "bugs": {
     "url": "https://github.com/asharma391/microcosmos/issues"
   },
-  "homepage": "https://microcosmos-atlas.arjundevensharma.chatgpt.site",
+  "homepage": "https://microcosmos.vercel.app",
   "type": "module",
   "scripts": {
     "dev": "vite",

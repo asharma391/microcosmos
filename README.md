@@ -2,7 +2,7 @@
 
 **A field guide to the invisible.** Explore microscopic life in an interactive 3D atlas.
 
-[Explore Microcosmos](https://microcosmos-atlas.arjundevensharma.chatgpt.site)
+[Explore Microcosmos](https://microcosmos.vercel.app)
 
 ## The collection
 
