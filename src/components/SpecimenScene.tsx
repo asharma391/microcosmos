@@ -74,7 +74,7 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
   const model = useMemo(() => {
     const clone = scene.clone(true);
     if (specimen.id === "tardigrade") clone.rotation.y = -1.05;
-    if (specimen.id === "diatom") clone.rotation.x = -Math.PI / 2;
+    if (specimen.id === "diatom") clone.rotation.x = Math.PI / 2;
     if (specimen.id === "paramecium") clone.rotation.x = Math.PI / 2;
     clone.traverse((node) => {
       if (!(node instanceof Mesh)) return;
