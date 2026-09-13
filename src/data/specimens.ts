@@ -1,185 +1,23 @@
 export type Specimen = {
-  id: string;
-  name: string;
-  latin: string;
-  group: string;
-  size: string;
-  microns: number;
-  color: string;
-  habitat: string;
-  intro: string;
-  fact: string;
+  id: string; name: string; latin: string; group: string; size: string; microns: number;
+  color: string; habitat: string; intro: string; fact: string; movement: string;
+  feeding: string; role: string; lens: string; question: string;
   parts: { name: string; note: string; point: [number, number, number] }[];
-  source: string;
-  image: string;
-  model: string;
+  source: string; image: string; model: string;
 };
-const data = [
-  {
-    id: "tardigrade",
-    name: "Tardigrade",
-    latin: "Phylum Tardigrada",
-    group: "Micro-animal",
-    size: "100–1,000 µm",
-    microns: 500,
-    color: "#b48055",
-    habitat: "Water films in moss & lichen",
-    intro:
-      "Eight little legs. An extraordinary survivor. Water bears explore their microscopic world with clawed feet and a flexible, segmented body.",
-    fact: "Some species survive drying by entering a dormant state called a tun. They still need water to be active.",
-    parts: [
-      {
-        name: "Clawed legs",
-        note: "Four pairs of short legs grip surfaces. The rear pair helps the animal anchor itself.",
-        point: [-0.6, -0.6, 0.7],
-      },
-      {
-        name: "Cuticle",
-        note: "A flexible outer covering protects the body and is shed as the animal grows.",
-        point: [0, 0.6, 0.5],
-      },
-      {
-        name: "Mouth apparatus",
-        note: "A mouth and paired piercing stylets allow feeding. Diet varies between species.",
-        point: [1.2, 0.2, 0.5],
-      },
-    ],
-    source:
-      "https://www.si.edu/stories/what-species-will-be-earths-last-survivors",
-  },
-  {
-    id: "rotifer",
-    name: "Rotifer",
-    latin: "Class Bdelloidea",
-    group: "Micro-animal",
-    size: "150–700 µm",
-    microns: 300,
-    color: "#aa7885",
-    habitat: "Freshwater plants & damp moss",
-    intro:
-      "A tiny animal with a remarkable crown. Beating cilia gather suspended food toward its mouth, giving rotifers their “wheel bearer” name.",
-    fact: "The wheels are an optical effect of beating cilia, not rotating body parts.",
-    parts: [
-      {
-        name: "Ciliated crown",
-        note: "Two ciliated lobes create water currents that carry food toward the mouth.",
-        point: [0, 1.2, 0.4],
-      },
-      {
-        name: "Contractile trunk",
-        note: "The flexible body extends and retracts. Internal organs occupy the trunk.",
-        point: [0, 0, 0.5],
-      },
-      {
-        name: "Anchoring foot",
-        note: "The narrow foot and toes help attach the animal to a surface.",
-        point: [0, -1.3, 0.3],
-      },
-    ],
-    source: "https://www.microscopy-uk.org.uk/mag/articles/winrotif.html",
-  },
-  {
-    id: "daphnia",
-    name: "Water flea",
-    latin: "Genus Daphnia",
-    group: "Crustacean",
-    size: "500–5,000 µm",
-    microns: 2000,
-    color: "#c49250",
-    habitat: "Plankton in ponds & lakes",
-    intro:
-      "A miniature crustacean in a translucent shell. Large antennae propel Daphnia through the water with a distinctive hopping motion.",
-    fact: "A water flea is a crustacean, not an insect. Larger individuals can be seen without a microscope.",
-    parts: [
-      {
-        name: "Compound eye",
-        note: "A prominent single compound eye detects light and helps guide movement.",
-        point: [0.4, 0.8, 0.5],
-      },
-      {
-        name: "Swimming antennae",
-        note: "The branched second antennae act like paddles during swimming.",
-        point: [-0.8, 0.8, 0.4],
-      },
-      {
-        name: "Carapace",
-        note: "A folded shell encloses most of the body. Its transparency reveals internal structures.",
-        point: [0, -0.2, 0.6],
-      },
-    ],
-    source: "https://animaldiversity.org/accounts/Daphnia_magna/",
-  },
-  {
-    id: "diatom",
-    name: "Centric diatom",
-    latin: "Centric diatom · illustrative form",
-    group: "Single-celled alga",
-    size: "10–200 µm",
-    microns: 60,
-    color: "#b09b58",
-    habitat: "Freshwater & marine plankton",
-    intro:
-      "Living geometry, enclosed in glass. A diatom builds an intricately patterned silica shell around a single photosynthetic cell.",
-    fact: "Its two overlapping shell halves fit together a little like the lid and base of a box.",
-    parts: [
-      {
-        name: "Silica frustule",
-        note: "The protective cell wall is made from hydrated silica and is called a frustule.",
-        point: [0, 0.2, 0.7],
-      },
-      {
-        name: "Patterned pores",
-        note: "Tiny openings perforate the shell. Their arrangement differs between species.",
-        point: [0.7, 0.6, 0.5],
-      },
-      {
-        name: "Girdle bands",
-        note: "Bands connect the overlapping valves around the sides of the shell.",
-        point: [0.8, -0.4, 0.4],
-      },
-    ],
-    source: "https://diatoms.org/what-are-diatoms",
-  },
-  {
-    id: "desmid",
-    name: "Desmid",
-    latin: "Genus Micrasterias",
-    group: "Single-celled alga",
-    size: "100–400 µm",
-    microns: 200,
-    color: "#508976",
-    habitat: "Quiet, low-nutrient freshwater",
-    intro:
-      "A single cell with astonishing symmetry. Deeply divided green lobes form two matching halves, joined by a narrow central bridge.",
-    fact: "After division, each daughter cell retains one old half and grows a new one.",
-    parts: [
-      {
-        name: "Semicells",
-        note: "Two lobed halves form one cell. Their outline and symmetry help identify the organism.",
-        point: [0, 0.8, 0.4],
-      },
-      {
-        name: "Central isthmus",
-        note: "A narrow connection joins the semicells. The nucleus occupies this central region.",
-        point: [0, 0, 0.5],
-      },
-      {
-        name: "Lobed margins",
-        note: "Deep divisions give Micrasterias its elaborate star-like outline.",
-        point: [1, 0.5, 0.3],
-      },
-    ],
-    source: "https://www.desmids.nl/info/reproductie/asexual_reproduction.html",
-  },
+
+const data: Omit<Specimen, "image" | "model">[] = [
+  { id:"tardigrade", name:"Tardigrade", latin:"Phylum Tardigrada", group:"Micro-animal", size:"100–1,000 µm", microns:500, color:"#b77f5c", habitat:"Water films in moss, lichen & sediment", intro:"Eight little legs, a telescoping body and a famous talent for waiting out hard times. Tardigrades are complete animals compressed into a near-microscopic form.", fact:"When water vanishes, some species contract into a dry tun and suspend most measurable metabolism until conditions improve.", movement:"Walks with four pairs of clawed lobopod legs", feeding:"Pierces plant, algal or animal cells with paired stylets", role:"Grazer and predator in the thin water film around moss", lens:"Low power; side lighting reveals the claws and gut", question:"Can you count all four pairs of legs before rotating the model?", parts:[{name:"Clawed legs",note:"Four pairs of short, unjointed legs grip wet surfaces; the last pair points backward.",point:[-.7,-.55,.7]},{name:"Cuticle",note:"A flexible protective coat is periodically shed as the animal grows.",point:[0,.65,.5]},{name:"Stylet apparatus",note:"Paired mineralized needles puncture food before a muscular pharynx pumps it in.",point:[1.15,.2,.55]},{name:"Segmented trunk",note:"Four trunk segments carry the legs while a distinct head bears sensory structures.",point:[-.15,.05,.8]}], source:"https://www.si.edu/stories/what-species-will-be-earths-last-survivors" },
+  { id:"rotifer", name:"Bdelloid rotifer", latin:"Class Bdelloidea", group:"Micro-animal", size:"150–700 µm", microns:300, color:"#bc7f91", habitat:"Freshwater plants, soil & damp moss", intro:"A transparent animal with a crown that seems to spin. Coordinated cilia pull bacteria and detritus toward a jawed pharynx.", fact:"The spinning wheels are an optical illusion made by waves of beating cilia, not rotating body parts.", movement:"Swims with its corona or creeps by looping head to foot", feeding:"Ciliary currents deliver particles to a grinding mastax", role:"Recycles microbes and organic particles in freshwater food webs", lens:"Brightfield at 100×; watch the corona before it retracts", question:"Which end anchors, and which end creates the feeding current?", parts:[{name:"Ciliated corona",note:"Two ciliated lobes sweep water and food toward the mouth.",point:[0,1.2,.4]},{name:"Mastax",note:"A muscular pharynx contains hard trophi that grasp or grind food.",point:[0,.55,.55]},{name:"Telescoping trunk",note:"The flexible body rapidly extends and contracts when disturbed.",point:[0,-.15,.55]},{name:"Anchoring foot",note:"Toes and adhesive glands attach the rotifer to a surface.",point:[0,-1.3,.3]}], source:"https://www.microscopy-uk.org.uk/mag/articles/winrotif.html" },
+  { id:"daphnia", name:"Water flea", latin:"Genus Daphnia", group:"Crustacean", size:"500–5,000 µm", microns:2000, color:"#d49b57", habitat:"Plankton in ponds, lakes & slow water", intro:"A miniature crustacean inside a transparent shell. Its beating heart, moving gut and developing embryos can often be watched in a living specimen.", fact:"Despite the nickname, Daphnia is a crustacean. Its hop-like swimming comes from strokes of the large second antennae.", movement:"Jerky swimming strokes from branched antennae", feeding:"Filters algae, bacteria and fine particles with thoracic limbs", role:"A crucial bridge between microscopic producers and fish", lens:"Low power; darkfield makes the transparent carapace glow", question:"Rotate the animal: what lies inside the shell but outside the body?", parts:[{name:"Compound eye",note:"A prominent fused eye detects light and helps orient vertical migration.",point:[.4,.8,.55]},{name:"Swimming antennae",note:"The branched second antennae act like powerful oars.",point:[-.8,.8,.45]},{name:"Carapace",note:"A folded shell encloses the trunk while leaving the head exposed.",point:[0,-.2,.65]},{name:"Brood chamber",note:"A protected dorsal space can hold eggs or developing young.",point:[-.15,.25,.75]}], source:"https://animaldiversity.org/accounts/Daphnia_magna/" },
+  { id:"diatom", name:"Centric diatom", latin:"Class Coscinodiscophyceae", group:"Single-celled alga", size:"10–200 µm", microns:60, color:"#c6a951", habitat:"Freshwater & marine plankton", intro:"A photosynthetic cell housed in a glass jewel. Its silica wall carries pore patterns precise enough to identify species.", fact:"The two halves of a diatom shell overlap like a lid and base; repeated cell division can gradually reduce one daughter line in size.", movement:"Mostly drifts; many centric forms regulate buoyancy", feeding:"Builds sugars by photosynthesis", role:"Major primary producer and long-term transporter of carbon", lens:"Phase contrast or darkfield reveals the patterned frustule", question:"Can you find the seam where the two glass valves overlap?", parts:[{name:"Silica frustule",note:"The hydrated silica cell wall is strong, transparent and intricately sculpted.",point:[0,.2,.7]},{name:"Patterned pores",note:"Microscopic openings connect the cell to water and form species-specific designs.",point:[.7,.6,.55]},{name:"Girdle bands",note:"Silica bands join the overlapping valves around the cell edge.",point:[.8,-.4,.4]},{name:"Chloroplasts",note:"Golden-brown plastids capture light and power the cell.",point:[-.35,.25,.65]}], source:"https://diatoms.org/what-are-diatoms" },
+  { id:"desmid", name:"Desmid", latin:"Genus Micrasterias", group:"Single-celled alga", size:"100–400 µm", microns:200, color:"#569978", habitat:"Quiet, acidic, low-nutrient freshwater", intro:"One cell, two mirrored halves. Elaborate lobes maximize surface area and turn an ordinary alga into living geometry.", fact:"After division, each daughter keeps one old semicell and constructs a perfectly fitted new half.", movement:"Glides slowly by secreting mucilage", feeding:"Photosynthesis in large lobed chloroplasts", role:"Sensitive indicator of clean, low-nutrient freshwater", lens:"Brightfield at 100–400×; focus through the flat cell", question:"Trace the bilateral symmetry from one lobe to its twin.", parts:[{name:"Semicells",note:"Two mirror-like halves make up a single cell.",point:[0,.8,.45]},{name:"Central isthmus",note:"A narrow bridge joins the halves and contains the nucleus.",point:[0,0,.55]},{name:"Lobed margins",note:"Deep incisions create the characteristic star-like outline.",point:[1,.5,.35]},{name:"Chloroplast",note:"A large branching chloroplast fills much of each semicell.",point:[-.6,.45,.55]}], source:"https://www.desmids.nl/info/reproductie/asexual_reproduction.html" },
+  { id:"euglena", name:"Euglena", latin:"Euglena gracilis", group:"Flagellate protist", size:"35–55 µm", microns:45, color:"#78a94d", habitat:"Nutrient-rich ponds & quiet freshwater", intro:"Plant-like and animal-like at once. Euglena harvests sunlight with chloroplasts, senses light with a red eyespot and swims using a flagellum.", fact:"Euglena is mixotrophic: it can photosynthesize in light and use organic nutrients when light or carbon dioxide is limited.", movement:"Pulls itself with a long anterior flagellum and flexes", feeding:"Photosynthesis plus uptake of dissolved organic compounds", role:"Primary producer and microbial grazer; blooms signal nutrient-rich water", lens:"Phase contrast at 400×; look for the red eyespot", question:"Turn the model until the eyespot lines up with the flagellum.", parts:[{name:"Flagellum",note:"A long whip-like filament pulls the cell through water.",point:[1.25,.35,.3]},{name:"Eyespot",note:"Red carotenoid granules help the cell orient toward useful light.",point:[.7,.35,.6]},{name:"Chloroplasts",note:"Green plastids capture light for photosynthesis.",point:[-.2,.25,.65]},{name:"Pellicle",note:"Protein strips beneath the membrane support shape while allowing flexible motion.",point:[-.6,-.45,.55]}], source:"https://www.britannica.com/science/Euglena" },
+  { id:"paramecium", name:"Paramecium", latin:"Paramecium caudatum", group:"Ciliate protist", size:"120–300 µm", microns:200, color:"#7fa7b5", habitat:"Freshwater rich in bacteria & decaying plants", intro:"A slipper-shaped single cell with thousands of oars. Its cilia coordinate locomotion, feeding and rapid escape responses.", fact:"Paramecium carries two kinds of nucleus: a macronucleus runs daily cell life while micronuclei preserve and exchange genetic information.", movement:"Rows of cilia beat in traveling waves", feeding:"Cilia sweep bacteria into an oral groove and food vacuoles", role:"Controls bacterial populations and feeds larger microorganisms", lens:"Brightfield at 100–400×; slow it with a strand of cotton", question:"Follow the oral groove: where would a food vacuole form?", parts:[{name:"Cilia",note:"Thousands of short hairs propel and steer the cell in coordinated waves.",point:[-.5,.85,.55]},{name:"Oral groove",note:"A side channel funnels bacteria toward the cell mouth.",point:[.35,.15,.75]},{name:"Macronucleus",note:"The large nucleus controls metabolism, growth and everyday gene expression.",point:[-.25,.05,.7]},{name:"Contractile vacuoles",note:"Star-like pumps expel excess water that continually enters the cell.",point:[.65,-.55,.6]}], source:"https://www.britannica.com/science/Paramecium" },
+  { id:"volvox", name:"Volvox colony", latin:"Volvox carteri", group:"Colonial green alga", size:"350–500 µm", microns:450, color:"#8cac42", habitat:"Sunlit ponds, ditches & temporary pools", intro:"A rolling hollow sphere built from thousands of cooperating cells. Tiny flagella point outward while daughter colonies develop within.", fact:"Volvox divides labor: most cells handle movement and photosynthesis, while a small number specialize in reproduction.", movement:"Thousands of outward flagella rotate and steer the colony", feeding:"Somatic cells photosynthesize and share resources through connections", role:"Planktonic producer and classic model for the evolution of multicellularity", lens:"Low power; dim the light to see daughter colonies inside", question:"How many nested generations can you find in one colony?", parts:[{name:"Somatic cells",note:"Thousands of small biflagellate cells form a single outer layer.",point:[.75,.55,.55]},{name:"Daughter colonies",note:"New colonies grow inside before the parent sphere releases them.",point:[-.35,.15,.75]},{name:"Extracellular matrix",note:"A transparent glycoprotein matrix holds cells in a precise sphere.",point:[0,-.8,.5]},{name:"Cytoplasmic bridges",note:"Fine connections coordinate neighboring cells and maintain colony form.",point:[.35,-.25,.7]}], source:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3063454/" },
+  { id:"stentor", name:"Stentor", latin:"Stentor coeruleus", group:"Ciliate protist", size:"500–2,000 µm", microns:1000, color:"#599ca2", habitat:"Freshwater plants, pond edges & sediment", intro:"A single cell that can grow longer than some small animals. It anchors by a holdfast, opens into a trumpet and creates a feeding vortex.", fact:"Stentor can rebuild a complete, correctly proportioned cell after major injury, making it a model for cellular regeneration.", movement:"Attaches and contracts like a spring; swims when detached", feeding:"An oral wreath of cilia draws algae and bacteria into the mouth", role:"Large microbial predator linking bacteria and algae to small animals", lens:"Low power; approach gently to avoid triggering contraction", question:"Watch the proportions: what changes when a trumpet contracts?", parts:[{name:"Oral funnel",note:"A broad ciliated rim drives a spiral current toward the cell mouth.",point:[0,1.1,.55]},{name:"Ciliary rows",note:"Longitudinal bands of cilia coordinate swimming and contraction.",point:[.6,.25,.6]},{name:"Beaded macronucleus",note:"A chain-like nucleus extends through the cell and controls daily activity.",point:[-.2,.2,.75]},{name:"Holdfast",note:"The narrow posterior end secretes material that attaches to a surface.",point:[0,-1.35,.4]}], source:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8511380/" },
 ];
-export const specimens: Specimen[] = data.map((d) => ({
-  ...d,
-  parts: d.parts.map((p) => ({
-    ...p,
-    point: p.point as [number, number, number],
-  })),
-  image: `/specimens/${d.id}.webp`,
-  model: `/models/${d.id}.glb`,
-}));
-export const getSpecimen = (id: string) =>
-  specimens.find((s) => s.id === id) ?? specimens[0];
+
+const pngSpecimens = new Set(["euglena", "paramecium", "volvox", "stentor"]);
+export const specimens: Specimen[] = data.map((d) => ({ ...d, image:`/specimens/${d.id}.${pngSpecimens.has(d.id) ? "png" : "webp"}`, model:`/models/${d.id}.glb` }));
+export const getSpecimen = (id: string) => specimens.find((s) => s.id === id) ?? specimens[0];

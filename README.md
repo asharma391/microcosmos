@@ -6,10 +6,11 @@
 
 ## The collection
 
-Meet a tardigrade, bdelloid rotifer, Daphnia water flea, centric diatom, and Micrasterias desmid. Orbit each specimen, zoom into its structure, switch between color and monochrome surface views, and compare representative real-world sizes.
+Meet nine microscopic organisms: a tardigrade, bdelloid rotifer, Daphnia, centric diatom, Micrasterias desmid, Euglena, Paramecium, Volvox and Stentor. Orbit each specimen, zoom into its structures, switch between color and microscope views, and compare representative real-world sizes.
 
-- Five curated specimens with habitat notes and scientific reading.
+- Nine curated specimens with ecology, movement, feeding, microscope tips and scientific reading.
 - Interactive structure markers and independently rotatable comparison views.
+- Searchable gallery and a visual identification quiz.
 - Cinema view for distraction-free exploration and recording.
 - Shareable specimen links, such as `?specimen=diatom`.
 - Responsive interface, keyboard navigation, and accessible dialogs.

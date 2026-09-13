@@ -7,6 +7,10 @@
     { "id": "rotifer", "jobId": "720d98dd-f916-45cd-8a2f-0f8be353f6aa", "method": "image-to-3d" },
     { "id": "daphnia", "jobId": "5231ab8e-e8b0-44cc-b3b5-127d263d1edf", "method": "text-to-3d" },
     { "id": "diatom", "jobId": "3f53bf3f-98ec-4ff0-8a7e-04a0c1c87263", "method": "text-to-3d" },
-    { "id": "desmid", "jobId": "6dde25b7-7ab4-466d-a73d-7a71b4a5c508", "method": "text-to-3d" }
+    { "id": "desmid", "jobId": "6dde25b7-7ab4-466d-a73d-7a71b4a5c508", "method": "text-to-3d" },
+    { "id": "euglena", "jobId": "6b3c54d8-607a-4825-be85-53d6fce00ca7", "method": "image-to-3d" },
+    { "id": "paramecium", "jobId": "99a1f732-510f-4e63-805c-a6e1819733fa", "method": "image-to-3d" },
+    { "id": "volvox", "jobId": "81e29fe0-eef7-4f9b-93af-7490e0b21218", "method": "image-to-3d" },
+    { "id": "stentor", "jobId": "cf2e3640-591d-4a91-b6ef-bbc400984cd6", "method": "image-to-3d" }
   ]
 }

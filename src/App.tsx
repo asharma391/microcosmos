@@ -1,441 +1,117 @@
-import { useCallback, useEffect, useState, Suspense, lazy } from "react";
-import {
-  Microscope,
-  Github,
-  ArrowUpRight,
-  BookOpen,
-  Layers2,
-  Expand,
-  X,
-  Box,
-  Scan,
-  Play,
-  Pause,
-  RotateCcw,
-  ZoomIn,
-  ZoomOut,
-  ChevronLeft,
-  ChevronRight,
-  SlidersHorizontal,
-  Sparkles,
-  MoveUpRight,
-} from "lucide-react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Box, ChevronDown, Expand, Eye, Gamepad2, Github, Grid3X3, Info, Layers2, Microscope, Move3D, Pause, Play, RotateCcw, Scan, Search, Sparkles, X, ZoomIn, ZoomOut } from "lucide-react";
 import { specimens, getSpecimen, type Specimen } from "./data/specimens";
 import { Modal } from "./components/Modal";
 import { useSpecimenTools } from "./hooks/useSpecimenTools";
+
 const Scene = lazy(() => import("./components/SpecimenScene"));
 const repo = "https://github.com/asharma391/microcosmos";
+
 export default function App() {
-  const [id, setId] = useState(
-      () =>
-        getSpecimen(new URLSearchParams(location.search).get("specimen") || "")
-          .id,
-    ),
-    s = getSpecimen(id),
-    n = specimens.indexOf(s);
-  const [active, setActive] = useState<number | null>(null),
-    [labels, setLabels] = useState(false),
-    [surface, setSurface] = useState(false),
-    [auto, setAuto] = useState(false),
-    [reset, setReset] = useState(0),
-    [zoom, setZoom] = useState(0),
-    [compare, setCompare] = useState(false),
-    [other, setOther] = useState("diatom"),
-    [notes, setNotes] = useState(false),
-    [cinema, setCinema] = useState(false);
-  const select = useCallback((value: string) => {
-    setId(value);
-    setActive(null);
-    setReset((r) => r + 1);
-    setZoom(0);
-    const u = new URL(location.href);
-    u.searchParams.set("specimen", value);
-    history.replaceState(null, "", u);
+  const [id, setId] = useState(() => getSpecimen(new URLSearchParams(location.search).get("specimen") || "").id);
+  const specimen = getSpecimen(id);
+  const index = specimens.indexOf(specimen);
+  const [active, setActive] = useState<number | null>(0);
+  const [labels, setLabels] = useState(true);
+  const [surface, setSurface] = useState(false);
+  const [auto, setAuto] = useState(true);
+  const [reset, setReset] = useState(0);
+  const [zoom, setZoom] = useState(0);
+  const [overlay, setOverlay] = useState<"compare"|"gallery"|"notes"|"quiz"|null>(null);
+  const [other, setOther] = useState("diatom");
+  const [query, setQuery] = useState("");
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [cinema, setCinema] = useState(false);
+
+  const select = useCallback((next: string) => {
+    setId(next); setActive(0); setReset((r) => r + 1); setZoom(0); setOverlay(null);
+    const url = new URL(location.href); url.searchParams.set("specimen", next); history.replaceState(null, "", url);
   }, []);
   useSpecimenTools(select);
-  const step = useCallback(
-    (d: number) =>
-      select(specimens[(n + d + specimens.length) % specimens.length].id),
-    [n, select],
-  );
+  const step = useCallback((delta: number) => select(specimens[(index + delta + specimens.length) % specimens.length].id), [index, select]);
   useEffect(() => {
-    const fn = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLSelectElement ||
-        e.target instanceof HTMLInputElement ||
-        compare ||
-        notes
-      )
-        return;
-      if (e.key === "ArrowRight") step(1);
-      if (e.key === "ArrowLeft") step(-1);
-      if (e.key === "Escape") setCinema(false);
+    const key = (event: KeyboardEvent) => {
+      if (overlay || event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      if (event.key === "ArrowRight") step(1);
+      if (event.key === "ArrowLeft") step(-1);
+      if (event.key === "Escape") setCinema(false);
     };
-    addEventListener("keydown", fn);
-    return () => removeEventListener("keydown", fn);
-  }, [step, compare, notes]);
-  const closeCompare = useCallback(() => setCompare(false), []),
-    closeNotes = useCallback(() => setNotes(false), []);
-  const view = (item: Specimen, compact = false) => (
-    <Suspense
-      fallback={<div className="loading-state">Preparing the viewer…</div>}
-    >
-      <Scene
-        specimen={item}
-        autoRotate={auto && !compact}
-        surface={surface}
-        labels={labels && !compact}
-        active={compact ? null : active}
-        onSelect={setActive}
-        resetKey={reset}
-        zoom={compact ? 0 : zoom}
-      />
-    </Suspense>
-  );
-  return (
-    <div className={`app ${cinema ? "cinema" : ""}`}>
-      <header className="topbar">
-        <a className="brand" href="/">
-          <span className="brand-mark">
-            <Microscope size={23} />
-          </span>
-          <span>
-            microcosmos<span className="brand-dot">.</span>
-          </span>
-        </a>
-        <span className="header-note">A FIELD GUIDE TO THE INVISIBLE</span>
-        <nav>
-          <button className="text-button" onClick={() => setNotes(true)}>
-            <BookOpen size={16} /> Field notes
-          </button>
-          <a className="github" href={repo} target="_blank" rel="noreferrer">
-            <Github size={17} />
-            <span>Star on GitHub</span>
-            <ArrowUpRight size={14} />
-          </a>
-        </nav>
-      </header>
-      <main className="workspace">
-        <aside className="sidebar">
-          <div className="section-label">
-            THE COLLECTION <span>05</span>
-          </div>
-          <div className="specimen-list">
-            {specimens.map((item, i) => (
-              <button
-                className={`specimen-button ${id === item.id ? "selected" : ""}`}
-                key={item.id}
-                onClick={() => select(item.id)}
-                aria-pressed={id === item.id}
-              >
-                <span className="thumbnail">
-                  <img src={item.image} alt="" />
-                </span>
-                <span>
-                  <b>{item.name}</b>
-                  <small>{item.group.toLowerCase()}</small>
-                </span>
-                <span className="list-number">0{i + 1}</span>
-              </button>
-            ))}
-          </div>
-          <div className="sidebar-bottom">
-            <span className="edition">VOLUME 001</span>
-            <p>
-              Small worlds.
-              <br />
-              <em>Endless wonder.</em>
-            </p>
-            <i className="sidebar-rule" />
-            <small>
-              Five specimens.
-              <br />A different way to see life.
-            </small>
-          </div>
-        </aside>
-        <section
-          className="specimen-workspace"
-          aria-label={`${s.name} explorer`}
-        >
-          <div className="specimen-heading">
-            <div>
-              <div className="eyebrow">
-                <span className="number">0{n + 1} / 05</span>
-                <span>{s.group.toUpperCase()}</span>
-              </div>
-              <h1>{s.name}</h1>
-              <p className="scientific">{s.latin}</p>
-            </div>
-            <div className="heading-actions">
-              <button
-                className="compare-button"
-                onClick={() => {
-                  if (other === id)
-                    setOther(specimens.find((a) => a.id !== id)!.id);
-                  setCompare(true);
-                }}
-              >
-                <Layers2 size={16} /> Compare
-              </button>
-              <button
-                className="icon-button"
-                aria-label={cinema ? "Exit cinema view" : "Enter cinema view"}
-                onClick={() => setCinema(!cinema)}
-              >
-                {cinema ? <X size={18} /> : <Expand size={18} />}
-              </button>
-            </div>
-          </div>
-          <div className="stage">
-            <div className="stage-top">
-              <span>
-                <i className="live-dot" />
-                INTERACTIVE SPECIMEN
-              </span>
-              <span className="render-note">ILLUSTRATIVE 3D MODEL</span>
-            </div>
-            {view(s)}
-            <div className="stage-bottom">
-              <span className="scale-indicator">
-                <i />
-                {s.size}
-                <small>typical size range · enlarged view</small>
-              </span>
-              <span className="orbit-hint">
-                Drag to orbit <span>·</span> Scroll to zoom
-              </span>
-            </div>
-          </div>
-          <div className="toolbar">
-            <div className="segmented">
-              <button
-                className={!surface ? "active" : ""}
-                onClick={() => setSurface(false)}
-              >
-                <Box size={15} /> Color
-              </button>
-              <button
-                className={surface ? "active" : ""}
-                onClick={() => setSurface(true)}
-              >
-                <Scan size={15} /> Surface
-              </button>
-            </div>
-            <i className="toolbar-divider" />
-            <button
-              className={`tool ${labels ? "active" : ""}`}
-              aria-label="Toggle labels"
-              aria-pressed={labels}
-              onClick={() => setLabels(!labels)}
-            >
-              <SlidersHorizontal size={16} />
-              <span>Labels</span>
-            </button>
-            <button
-              className={`tool ${auto ? "active" : ""}`}
-              aria-label="Toggle rotation"
-              aria-pressed={auto}
-              onClick={() => setAuto(!auto)}
-            >
-              {auto ? <Pause size={16} /> : <Play size={16} />}
-              <span>Rotate</span>
-            </button>
-            <button
-              className="tool"
-              aria-label="Reset view"
-              onClick={() => {
-                setReset((r) => r + 1);
-                setZoom(0);
-                setActive(null);
-              }}
-            >
-              <RotateCcw size={16} />
-              <span>Reset</span>
-            </button>
-            <div className="zoom-tools">
-              <button
-                aria-label="Zoom out"
-                onClick={() => setZoom((z) => Math.max(-3, z - 1))}
-              >
-                <ZoomOut size={17} />
-              </button>
-              <button
-                aria-label="Zoom in"
-                onClick={() => setZoom((z) => Math.min(4, z + 1))}
-              >
-                <ZoomIn size={17} />
-              </button>
-            </div>
-          </div>
-          <div className="understage">
-            <div>
-              <span className="section-label">OBSERVATION 0{n + 1}</span>
-              <p>{s.intro}</p>
-            </div>
-            <div className="next-specimen">
-              <button aria-label="Previous specimen" onClick={() => step(-1)}>
-                <ChevronLeft size={20} />
-              </button>
-              <button aria-label="Next specimen" onClick={() => step(1)}>
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </div>
-        </section>
-        <aside className="details">
-          <div className="detail-header">
-            <span className="section-label">A CLOSER LOOK</span>
-            <span className="tiny-cross">+</span>
-          </div>
-          <h2>Remarkable by nature.</h2>
-          <div className="structures">
-            {s.parts.map((p, i) => (
-              <button
-                className={`structure ${active === i ? "active" : ""}`}
-                key={p.name}
-                onClick={() => {
-                  setActive(active === i ? null : i);
-                  setLabels(true);
-                }}
-              >
-                <span className="structure-index">0{i + 1}</span>
-                <span>
-                  <b>{p.name}</b>
-                  <p>{p.note}</p>
-                </span>
-                <MoveUpRight size={14} />
-              </button>
-            ))}
-          </div>
-          <div className="field-note">
-            <Sparkles size={16} />
-            <span className="section-label">DID YOU KNOW?</span>
-            <p>{s.fact}</p>
-          </div>
-          <div className="habitat">
-            <span className="section-label">WHERE TO FIND IT</span>
-            <h3>
-              <span>⌖</span>
-              {s.habitat}
-            </h3>
-          </div>
-          <button className="sources-button" onClick={() => setNotes(true)}>
-            Sources & illustration notes <ArrowUpRight size={14} />
-          </button>
-        </aside>
-      </main>
-      <footer>
-        <span>EXPLORE THE EXTRAORDINARY IN THE ORDINARY.</span>
-        <span>
-          Built with curiosity <span className="footer-dot">·</span>
-          <a href={repo}>
-            Open source <ArrowUpRight size={12} />
-          </a>
-        </span>
-      </footer>
-      <Modal
-        open={compare}
-        onClose={closeCompare}
-        label="Compare specimens"
-        panelClassName="comparison-modal"
-      >
-        <span className="section-label">SIDE BY SIDE</span>
-        <h2>A matter of perspective.</h2>
-        <p className="modal-intro">
-          Models fit their own viewports. The bars compare representative
-          real-world lengths.
-        </p>
-        <div className="comparison-columns">
-          {[s, getSpecimen(other)].map((item, i) => (
-            <section key={i}>
-              <div className="comparison-title">
-                {i === 0 ? (
-                  <h3>{item.name}</h3>
-                ) : (
-                  <select
-                    aria-label="Comparison specimen"
-                    value={other}
-                    onChange={(e) => setOther(e.target.value)}
-                  >
-                    {specimens
-                      .filter((a) => a.id !== id)
-                      .map((a) => (
-                        <option key={a.id} value={a.id}>
-                          {a.name}
-                        </option>
-                      ))}
-                  </select>
-                )}
-                <span>{item.group}</span>
-              </div>
-              <div className="comparison-stage">{view(item, true)}</div>
-              <div className="size-row">
-                <b>{item.size}</b>
-                <span>
-                  Representative length: {item.microns.toLocaleString()} µm
-                </span>
-                <div className="size-track">
-                  <i
-                    style={{
-                      width: `${(item.microns / 2000) * 100}%`,
-                      background: item.color,
-                    }}
-                  />
-                </div>
-              </div>
-              <p>{item.intro}</p>
-            </section>
-          ))}
-        </div>
-      </Modal>
-      <Modal
-        open={notes}
-        onClose={closeNotes}
-        label="Field notes and sources"
-        panelClassName="notes-modal"
-      >
-        <span className="section-label">THE FIELD NOTES</span>
-        <h2>Wonder, with context.</h2>
-        <p>
-          Microcosmos is an open-source atlas of microscopic life. Explore five
-          organisms through curated, interactive illustrations.
-        </p>
-        <h3>About the models</h3>
-        <p>
-          AI-generated educational illustrations created with Tripo. Shapes,
-          colors, and details are simplified. These are not scans,
-          identification tools, or research-grade reconstructions. “Surface” is
-          a monochrome rendering style, not an electron-microscope image.
-          Structure markers indicate approximate regions.
-        </p>
-        <h3>Size & scale</h3>
-        <p>
-          Size varies with species, age, and conditions. Ranges describe the
-          represented groups; comparison bars use representative lengths. Models
-          are enlarged independently to fit the viewer.
-        </p>
-        <h3>Reading for {s.name}</h3>
-        <a
-          className="source-link"
-          href={s.source}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Read the scientific background <ArrowUpRight size={14} />
-        </a>
-        <h3>Made possible by open source</h3>
-        <p>
-          Adapted from{" "}
-          <a href="https://github.com/cclank/cell-architecture-studio">
-            Cell Architecture Studio
-          </a>{" "}
-          under the MIT License. Inspired by Dilum Sanjaya and The Bugged Dev.
-          Built with React, Three.js, React Three Fiber, and Drei.
-        </p>
-        <a className="github" href={repo}>
-          <Github size={17} /> Explore the source <ArrowUpRight size={14} />
-        </a>
-      </Modal>
+    addEventListener("keydown", key); return () => removeEventListener("keydown", key);
+  }, [overlay, step]);
+
+  const filtered = specimens.filter((item) => `${item.name} ${item.group}`.toLowerCase().includes(query.toLowerCase()));
+  const quizOptions = useMemo(() => [specimen, ...specimens.filter((s) => s.id !== specimen.id).slice(0, 3)].sort(() => .5 - Math.random()), [specimen]);
+  const view = (item: Specimen, compact=false) => <Suspense fallback={<div className="loading-state">Preparing specimen…</div>}><Scene specimen={item} autoRotate={auto && !compact} surface={surface} labels={labels && !compact} active={compact ? null : active} onSelect={setActive} resetKey={reset} zoom={compact ? 0 : zoom} /></Suspense>;
+  const style = { "--accent": specimen.color } as CSSProperties;
+
+  return <div className={`app-shell ${cinema ? "cinema" : ""}`} style={style}>
+    <header className="topbar">
+      <a className="brand-block" href="/"><span className="brand-orb"><Microscope size={25}/></span><span><b>Microcosmos Atlas</b><em>Explore life at the microscopic level</em></span></a>
+      <nav aria-label="Primary navigation">
+        <button onClick={() => setOverlay("gallery")}><Grid3X3/><span>Gallery</span></button>
+        <button onClick={() => setOverlay("compare")}><Layers2/><span>Compare</span></button>
+        <button onClick={() => setOverlay("notes")}><BookOpen/><span>Field guide</span></button>
+        <button onClick={() => { setAnswer(null); setOverlay("quiz"); }}><Gamepad2/><span>Quiz</span></button>
+        <a className="star-button" href={repo} target="_blank" rel="noreferrer"><Github/><span>Star on GitHub</span></a>
+      </nav>
+    </header>
+
+    <div className="specimen-strip" aria-label="Specimen collection">
+      {specimens.map((item) => <button key={item.id} className={item.id === id ? "selected" : ""} onClick={() => select(item.id)}><img src={item.image}/><span><b>{item.name}</b><small>{item.group}</small></span></button>)}
     </div>
-  );
+
+    <main className="app-grid">
+      <aside className="left-rail">
+        <section className="panel library-panel">
+          <div className="panel-heading"><span><Sparkles size={16}/> Specimen library</span><small>09</small></div>
+          <label className="search"><Search size={15}/><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search specimens"/></label>
+          <div className="library-list">{filtered.map((item, i) => <button key={item.id} className={item.id === id ? "active" : ""} onClick={() => select(item.id)}><span className="index">{String(i+1).padStart(2,"0")}</span><img src={item.image}/><span><b>{item.name}</b><em>{item.latin}</em></span><ChevronDown size={15}/></button>)}</div>
+        </section>
+        <section className="panel parts-panel">
+          <div className="panel-heading"><span><Eye size={16}/> Structures</span><small>{specimen.parts.length}</small></div>
+          {specimen.parts.map((part, i) => <button key={part.name} className={active === i ? "active" : ""} onClick={() => {setActive(i); setLabels(true);}}><span>{String(i+1).padStart(2,"0")}</span><b>{part.name}</b><ArrowRight size={15}/></button>)}
+        </section>
+      </aside>
+
+      <section className="center-column">
+        <div className="panel stage-card">
+          <div className="stage-title"><div><span className="kicker">SPECIMEN {String(index+1).padStart(2,"0")} · {specimen.group.toUpperCase()}</span><h1>{specimen.name}</h1><p>{specimen.latin}</p></div><button onClick={() => setCinema(!cinema)} aria-label="Expand viewer">{cinema ? <X/> : <Expand/>}</button></div>
+          <div className="view-selector"><span>VIEW MODE</span><button className={!surface ? "active" : ""} onClick={() => setSurface(false)}><Box/> 3D specimen</button><button className={surface ? "active" : ""} onClick={() => setSurface(true)}><Scan/> Microscope</button></div>
+          <div className="tool-rail">
+            <button className={labels ? "active" : ""} onClick={() => setLabels(!labels)} title="Toggle labels"><Eye/><span>Labels</span></button>
+            <button className={auto ? "active" : ""} onClick={() => setAuto(!auto)} title="Auto rotate">{auto ? <Pause/> : <Play/>}<span>Rotate</span></button>
+            <button onClick={() => setZoom((z) => Math.min(4,z+1))}><ZoomIn/><span>Zoom in</span></button>
+            <button onClick={() => setZoom((z) => Math.max(-3,z-1))}><ZoomOut/><span>Zoom out</span></button>
+            <button onClick={() => {setReset((r)=>r+1);setZoom(0);setActive(0);}}><RotateCcw/><span>Reset</span></button>
+          </div>
+          <div className="scene-wrap">{view(specimen)}</div>
+          <div className="stage-hint"><Move3D size={15}/> Drag to rotate · scroll to zoom</div>
+          <div className="sticky-note">Look closely—<br/><b>the invisible is alive.</b></div>
+          <div className="scale"><span/><b>{specimen.size}</b><small>typical length</small></div>
+        </div>
+        <div className="bottom-panels">
+          <section className="panel microscope-card"><div className="panel-heading"><span><Microscope size={16}/> Microscope view</span><small>REFERENCE PLATE</small></div><div className="micro-body"><img src={specimen.image}/><div><b>How to find it</b><p>{specimen.lens}</p><a href={specimen.source} target="_blank" rel="noreferrer">Scientific source <ArrowUpRight size={14}/></a></div></div></section>
+          <section className="panel compare-card"><div className="panel-heading"><span>Compare scale</span><Info size={15}/></div><div className="scale-visual"><div className="scale-dot"/><span>{specimen.microns.toLocaleString()} µm</span><i style={{width:`${Math.max(4,Math.min(100,specimen.microns/20))}%`}}/></div><p>{specimen.name} is about <b>{specimen.microns >= 1000 ? `${specimen.microns/1000} mm` : `${specimen.microns} micrometres`}</b> long in this representative comparison.</p><button onClick={() => setOverlay("compare")}>Open comparison view <ArrowRight size={17}/></button></section>
+        </div>
+      </section>
+
+      <aside className="right-rail">
+        <section className="panel info-panel">
+          <span className="kicker">SPECIMEN PROFILE</span><h2>{specimen.name}</h2><em>{specimen.latin}</em><p className="intro">{specimen.intro}</p>
+          <div className="quick-facts"><div><span>SIZE</span><b>{specimen.size}</b></div><div><span>HABITAT</span><b>{specimen.habitat}</b></div></div>
+          <div className="fact-list"><div><span>MOVE</span><p>{specimen.movement}</p></div><div><span>ENERGY</span><p>{specimen.feeding}</p></div><div><span>ECOSYSTEM</span><p>{specimen.role}</p></div></div>
+          <div className="biological-note"><Sparkles size={17}/><div><span>BIOLOGICAL NOTE</span><p>{specimen.fact}</p></div></div>
+          <div className="active-part"><span>SELECTED STRUCTURE · {String((active ?? 0)+1).padStart(2,"0")}</span><h3>{specimen.parts[active ?? 0].name}</h3><p>{specimen.parts[active ?? 0].note}</p></div>
+        </section>
+        <section className="panel question-card"><span>OBSERVATION PROMPT</span><p>{specimen.question}</p><button onClick={() => setOverlay("quiz")}>Test yourself <ArrowRight size={16}/></button></section>
+      </aside>
+    </main>
+
+    <footer><span>09 SPECIMENS · 36 LABELED STRUCTURES · FULLY INTERACTIVE</span><a href={repo}>OPEN SOURCE ON GITHUB <ArrowUpRight size={13}/></a></footer>
+
+    <Modal open={overlay === "gallery"} onClose={() => setOverlay(null)} label="Specimen gallery" panelClassName="wide-modal"><span className="kicker">SPECIMEN GALLERY</span><h2>Nine worlds in a drop of water.</h2><div className="gallery-grid">{specimens.map((item) => <button key={item.id} onClick={() => select(item.id)}><img src={item.image}/><span><b>{item.name}</b><em>{item.latin}</em><small>{item.size}</small></span></button>)}</div></Modal>
+    <Modal open={overlay === "compare"} onClose={() => setOverlay(null)} label="Compare specimens" panelClassName="wide-modal"><span className="kicker">SIDE BY SIDE</span><h2>A matter of perspective.</h2><div className="comparison-columns">{[specimen,getSpecimen(other)].map((item,i) => <section key={i}><div className="comparison-name">{i===0?<h3>{item.name}</h3>:<select value={other} onChange={(e)=>setOther(e.target.value)}>{specimens.filter((x)=>x.id!==id).map((x)=><option value={x.id} key={x.id}>{x.name}</option>)}</select>}<span>{item.size}</span></div><div className="comparison-stage">{view(item,true)}</div><p>{item.intro}</p></section>)}</div></Modal>
+    <Modal open={overlay === "quiz"} onClose={() => setOverlay(null)} label="Specimen quiz" panelClassName="quiz-modal"><span className="kicker">QUICK IDENTIFICATION</span><h2>Who lives here?</h2><img className="quiz-image" src={specimen.image}/><p className="quiz-clue">Clue: {specimen.role}</p><div className="quiz-options">{quizOptions.map((item)=><button key={item.id} className={answer ? item.id===specimen.id?"correct":item.id===answer?"wrong":"":""} onClick={()=>setAnswer(item.id)}>{item.name}</button>)}</div>{answer&&<p className="quiz-result">{answer===specimen.id?"Correct — excellent observation.":`Look again. This is ${specimen.name}.`}</p>}</Modal>
+    <Modal open={overlay === "notes"} onClose={() => setOverlay(null)} label="Field guide" panelClassName="notes-modal"><span className="kicker">FIELD GUIDE</span><h2>Wonder, with context.</h2><p>Microcosmos Atlas is an open-source, interactive field guide to nine microscopic organisms. Every specimen includes an orbitable model, labeled structures, scale, ecology, feeding, movement, microscope tips and a scientific reading link.</p><h3>About the models</h3><p>Models and reference plates were generated with AI for visual education. Forms, colors and label positions are simplified illustrations rather than microscope scans or research-grade reconstructions.</p><h3>Made possible by open source</h3><p>Adapted from <a href="https://github.com/cclank/cell-architecture-studio">Cell Architecture Studio</a> under the MIT License. Inspired by the 3D cell explorer by Dilum Sanjaya and the Anatomy project by The Bugged Dev.</p><a className="star-button" href={repo}><Github/> Explore the source <ArrowUpRight/></a></Modal>
+  </div>;
 }

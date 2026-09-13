@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import assert from 'node:assert/strict';
-const ids = ['tardigrade', 'rotifer', 'daphnia', 'diatom', 'desmid'];
+const ids = ['tardigrade', 'rotifer', 'daphnia', 'diatom', 'desmid', 'euglena', 'paramecium', 'volvox', 'stentor'];
 for (const id of ids) {
   const path = `public/models/${id}.glb`;
   assert.ok(existsSync(path), `Missing specimen model: ${path}`);
@@ -13,6 +13,6 @@ for (const id of ids) {
   assert.ok(doc.meshes?.some(mesh => mesh.primitives?.length), `${id}: no renderable geometry`);
   for (const image of doc.images ?? []) assert.ok(!image.uri || image.uri.startsWith('data:'), `${id}: external texture would break offline distribution`);
   for (const buffer of doc.buffers ?? []) assert.ok(!buffer.uri || buffer.uri.startsWith('data:'), `${id}: unexpected external geometry`);
-  assert.ok(existsSync(`public/specimens/${id}.webp`), `${id}: missing thumbnail`);
+  assert.ok(existsSync(`public/specimens/${id}.webp`) || existsSync(`public/specimens/${id}.png`), `${id}: missing thumbnail`);
   console.log(`${id}: valid GLB, ${(file.length / 1024 / 1024).toFixed(2)} MB`);
 }
