@@ -6,9 +6,10 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type ReactNode,
 } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import {
   ContactShadows,
   Html,
@@ -69,6 +70,75 @@ function Loading() {
     </Html>
   );
 }
+function Annotation({
+  part,
+  index,
+  color,
+  anchor,
+  marker,
+  normal,
+  active,
+  onSelect,
+}: {
+  part: Specimen["parts"][number];
+  index: number;
+  color: string;
+  anchor: [number, number, number];
+  marker: [number, number, number];
+  normal: [number, number, number];
+  active: number | null;
+  onSelect: (n: number) => void;
+}) {
+  const [occluded, setOccluded] = useState(false);
+  const [backFacing, setBackFacing] = useState(false);
+  const anchorVector = useMemo(() => new Vector3(...anchor), [anchor]);
+  const normalVector = useMemo(() => new Vector3(...normal), [normal]);
+  const toCamera = useRef(new Vector3());
+  const wasBackFacing = useRef(false);
+  useFrame(({ camera }) => {
+    const hidden =
+      toCamera.current.copy(camera.position).sub(anchorVector).dot(normalVector) <= 0;
+    if (hidden !== wasBackFacing.current) {
+      wasBackFacing.current = hidden;
+      setBackFacing(hidden);
+    }
+  });
+  if (backFacing) return null;
+  return (
+    <group>
+      {!occluded && (
+        <>
+          <mesh position={anchor}>
+            <sphereGeometry args={[0.025, 12, 12]} />
+            <meshBasicMaterial color={color} depthTest={false} />
+          </mesh>
+          <Line
+            points={[anchor, marker]}
+            color={color}
+            lineWidth={1.2}
+            depthTest={false}
+          />
+        </>
+      )}
+      <Html
+        position={marker}
+        center
+        occlude
+        onOcclude={setOccluded}
+        zIndexRange={[8, 0]}
+      >
+        <button
+          aria-label={part.name}
+          className={`hotspot ${active === index ? "selected" : ""}`}
+          onClick={() => onSelect(index)}
+        >
+          0{index + 1}
+        </button>
+        {active === index && <div className="hotspot-label">{part.name}</div>}
+      </Html>
+    </group>
+  );
+}
 function Model({ specimen, surface, labels, active, onSelect }: Props) {
   const { scene } = useGLTF(specimen.model);
   const model = useMemo(() => {
@@ -127,14 +197,25 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
         new Vector3(0, 0, -1),
       );
       let hit = raycaster.intersectObject(clone, true)[0];
+      let outward = new Vector3(0, 0, 1);
       if (!hit) {
         const radial = candidate.clone();
         if (radial.lengthSq() < 0.001) radial.set(0, 0, 1);
         radial.normalize();
+        outward = radial.clone();
         raycaster.set(radial.clone().multiplyScalar(maxHalf * 3), radial.clone().negate());
         hit = raycaster.intersectObject(clone, true)[0];
       }
-      return (hit?.point ?? candidate).toArray() as [number, number, number];
+      let normal = outward;
+      if (hit?.face) {
+        normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+        if (normal.dot(outward) < 0) normal.negate();
+      }
+      const snapped = hit?.point.clone().addScaledVector(normal, maxHalf * 0.008) ?? candidate;
+      return {
+        point: snapped.toArray() as [number, number, number],
+        normal: normal.toArray() as [number, number, number],
+      };
     });
     return { object: clone, halfSize, anchors };
   }, [scene, surface, specimen.id, specimen.parts]);
@@ -154,7 +235,7 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
         <primitive object={model.object} />
         {labels &&
           specimen.parts.map((p, i) => {
-            const anchor = model.anchors[i];
+            const anchor = model.anchors[i].point;
             const lift = Math.max(0.08, Math.min(0.18, model.halfSize.y * 0.12));
             const insetX =
               Math.abs(anchor[0]) > model.halfSize.x * 0.78
@@ -167,28 +248,17 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
               anchor[2],
             ];
             return (
-              <group key={p.name}>
-                <mesh position={anchor}>
-                  <sphereGeometry args={[0.025, 12, 12]} />
-                  <meshBasicMaterial color={specimen.color} depthTest={false} />
-                </mesh>
-                <Line
-                  points={[anchor, marker]}
-                  color={specimen.color}
-                  lineWidth={1.2}
-                  depthTest={false}
-                />
-                <Html position={marker} center zIndexRange={[8, 0]}>
-                  <button
-                    aria-label={p.name}
-                    className={`hotspot ${active === i ? "selected" : ""}`}
-                    onClick={() => onSelect(i)}
-                  >
-                    0{i + 1}
-                  </button>
-                  {active === i && <div className="hotspot-label">{p.name}</div>}
-                </Html>
-              </group>
+              <Annotation
+                key={p.name}
+                part={p}
+                index={i}
+                color={specimen.color}
+                anchor={anchor}
+                marker={marker}
+                normal={model.anchors[i].normal}
+                active={active}
+                onSelect={onSelect}
+              />
             );
           })}
     </group>
