@@ -29,7 +29,9 @@ import {
   ACESFilmicToneMapping,
 } from "three";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import type { Specimen } from "../data/specimens";
+import { specimens, type Specimen } from "../data/specimens";
+
+const modelUrls = specimens.map((specimen) => specimen.model);
 type Props = {
   specimen: Specimen;
   autoRotate: boolean;
@@ -41,12 +43,17 @@ type Props = {
   zoom: number;
 };
 class SceneError extends Component<
-  { children: ReactNode; image: string },
+  { children: ReactNode; image: string; resetKey: string },
   { failed: boolean }
 > {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
+  }
+  componentDidUpdate(previous: Readonly<{ resetKey: string }>) {
+    if (this.state.failed && previous.resetKey !== this.props.resetKey) {
+      this.setState({ failed: false });
+    }
   }
   render() {
     return this.state.failed ? (
@@ -60,6 +67,7 @@ class SceneError extends Component<
     );
   }
 }
+
 function Loading() {
   const { progress } = useProgress();
   return (
@@ -140,7 +148,10 @@ function Annotation({
   );
 }
 function Model({ specimen, surface, labels, active, onSelect }: Props) {
-  const { scene } = useGLTF(specimen.model);
+  // Use the same combined cache key for every selection. The first visit loads
+  // the complete collection once; subsequent switches never suspend for a GLB.
+  const loadedModels = useGLTF(modelUrls);
+  const scene = loadedModels[specimens.findIndex((item) => item.id === specimen.id)].scene;
   const model = useMemo(() => {
     const clone = scene.clone(true);
     if (specimen.id === "tardigrade") clone.rotation.y = -1.05;
@@ -306,7 +317,7 @@ function Controls({
 }
 export default function SpecimenScene(props: Props) {
   return (
-    <SceneError key={props.specimen.id} image={props.specimen.image}>
+    <SceneError image={props.specimen.image} resetKey={props.specimen.id}>
       <Canvas
         camera={{ position: [0, 0.12, 6], fov: 38 }}
         dpr={[1, 1.75]}
