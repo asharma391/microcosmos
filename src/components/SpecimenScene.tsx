@@ -3,6 +3,7 @@
 import {
   Component,
   Suspense,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -32,6 +33,21 @@ import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { specimens, type Specimen } from "../data/specimens";
 
 const modelUrls = specimens.map((specimen) => specimen.model);
+
+function runWhenIdle(task: () => void) {
+  let idleId: number | undefined;
+  const delayId = setTimeout(() => {
+    if (typeof window.requestIdleCallback === "function") {
+      idleId = window.requestIdleCallback(task, { timeout: 2000 });
+    } else {
+      task();
+    }
+  }, 450);
+  return () => {
+    clearTimeout(delayId);
+    if (idleId !== undefined) window.cancelIdleCallback(idleId);
+  };
+}
 type Props = {
   specimen: Specimen;
   autoRotate: boolean;
@@ -76,6 +92,26 @@ function Loading() {
         Loading specimen · {Math.round(progress)}%
       </div>
     </Html>
+  );
+}
+
+function WarmModel({ url, onReady }: { url: string; onReady: () => void }) {
+  useGLTF(url);
+  useEffect(() => runWhenIdle(onReady), [onReady, url]);
+  return null;
+}
+
+function CollectionWarmer({ current }: { current: string }) {
+  const queue = useRef(modelUrls.filter((url) => url !== current));
+  const [index, setIndex] = useState(-1);
+  const advance = useCallback(() => setIndex((value) => value + 1), []);
+  useEffect(() => runWhenIdle(advance), [advance]);
+  const url = queue.current[index];
+  if (!url) return null;
+  return (
+    <Suspense fallback={null}>
+      <WarmModel url={url} onReady={advance} />
+    </Suspense>
   );
 }
 function Annotation({
@@ -148,10 +184,7 @@ function Annotation({
   );
 }
 function Model({ specimen, surface, labels, active, onSelect }: Props) {
-  // Use the same combined cache key for every selection. The first visit loads
-  // the complete collection once; subsequent switches never suspend for a GLB.
-  const loadedModels = useGLTF(modelUrls);
-  const scene = loadedModels[specimens.findIndex((item) => item.id === specimen.id)].scene;
+  const { scene } = useGLTF(specimen.model);
   const model = useMemo(() => {
     const clone = scene.clone(true);
     if (specimen.id === "tardigrade") clone.rotation.y = -1.05;
@@ -345,6 +378,7 @@ export default function SpecimenScene(props: Props) {
             frames={1}
           />
         </Suspense>
+        <CollectionWarmer current={props.specimen.model} />
         <Controls
           resetKey={props.resetKey}
           zoom={props.zoom}
