@@ -1,0 +1,12 @@
+{
+  "generator": "Tripo AI Studio v3.1",
+  "generatedAt": "2026-09-13",
+  "note": "AI-generated educational illustrations; not microscope scans or validated reconstructions.",
+  "models": [
+    { "id": "tardigrade", "jobId": "bf371b76-8ce3-47f4-a637-652704a20818", "method": "text-to-3d" },
+    { "id": "rotifer", "jobId": "720d98dd-f916-45cd-8a2f-0f8be353f6aa", "method": "image-to-3d" },
+    { "id": "daphnia", "jobId": "5231ab8e-e8b0-44cc-b3b5-127d263d1edf", "method": "text-to-3d" },
+    { "id": "diatom", "jobId": "3f53bf3f-98ec-4ff0-8a7e-04a0c1c87263", "method": "text-to-3d" },
+    { "id": "desmid", "jobId": "6dde25b7-7ab4-466d-a73d-7a71b4a5c508", "method": "text-to-3d" }
+  ]
+}
