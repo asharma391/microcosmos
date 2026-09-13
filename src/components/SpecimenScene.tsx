@@ -100,7 +100,8 @@ function Model({ specimen, surface, labels, active, onSelect }: Props) {
     });
     const box = new Box3().setFromObject(clone),
       size = box.getSize(new Vector3());
-    const scale = 3.4 / Math.max(size.x, size.y, size.z);
+    // Leave a little breathing room so annotations remain readable during zoom.
+    const scale = 3.2 / Math.max(size.x, size.y, size.z);
     clone.scale.setScalar(scale);
     clone.updateMatrixWorld(true);
     const fittedBox = new Box3().setFromObject(clone);
@@ -196,7 +197,7 @@ function Controls({
       autoRotate={autoRotate}
       autoRotateSpeed={0.7}
       enablePan={false}
-      minDistance={2.2}
+      minDistance={3.7}
       maxDistance={11}
       enableDamping
       dampingFactor={0.08}

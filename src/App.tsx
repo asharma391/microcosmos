@@ -74,13 +74,13 @@ export default function App() {
       </aside>
 
       <section className="center-column">
-        <div className="panel stage-card">
+        <div className={`panel stage-card ${zoom > 0 ? "is-zoomed" : ""}`}>
           <div className="stage-title"><div><span className="kicker">SPECIMEN {String(index+1).padStart(2,"0")} · {specimen.group.toUpperCase()}</span><h1>{specimen.name}</h1><p>{specimen.latin}</p></div><button onClick={() => setCinema(!cinema)} aria-label="Expand viewer">{cinema ? <X/> : <Expand/>}</button></div>
           <div className="view-selector"><span>VIEW MODE</span><button className={!surface ? "active" : ""} onClick={() => setSurface(false)}><Box/> 3D specimen</button><button className={surface ? "active" : ""} onClick={() => setSurface(true)}><Scan/> Microscope</button></div>
           <div className="tool-rail">
             <button className={labels ? "active" : ""} onClick={() => setLabels(!labels)} title="Toggle labels"><Eye/><span>Labels</span></button>
             <button className={auto ? "active" : ""} onClick={() => setAuto(!auto)} title="Auto rotate">{auto ? <Pause/> : <Play/>}<span>Rotate</span></button>
-            <button onClick={() => setZoom((z) => Math.min(4,z+1))}><ZoomIn/><span>Zoom in</span></button>
+            <button onClick={() => setZoom((z) => Math.min(2,z+1))}><ZoomIn/><span>Zoom in</span></button>
             <button onClick={() => setZoom((z) => Math.max(-3,z-1))}><ZoomOut/><span>Zoom out</span></button>
             <button onClick={() => {setReset((r)=>r+1);setZoom(0);setActive(0);}}><RotateCcw/><span>Reset</span></button>
           </div>
